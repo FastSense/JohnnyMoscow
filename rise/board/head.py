@@ -7,16 +7,6 @@ from rise.cannet import steppercontroller, bot
 from rise.cannet.steppercontroller import WorkMode, CalibrationMode
 
 
-# Максимальные значения углов. Задаются в конфиг файле
-configurationHead = {}
-with open("rise/devices/headConf.json", "r") as file:
-    configurationHead = json.load(file)
-
-maxAngleYaw = configurationHead["maxAngleYaw"]
-maxAnglePitch = configurationHead["maxAnglePitch"]
-maxAngleRoll = configurationHead["maxAngleRoll"]
-
-
 class Head:
     """ Класс поворотной головы Джонни """
 

@@ -25,6 +25,11 @@ class Motors:
         speed = min(max(-100, speed), 100)
         self._motorController.setAllSpeed(speed, -speed)
 
+    def setSpeed(self, speedA, speedB):
+        speedA = min(max(-100, speedA), 100)
+        speedB = min(max(-100, speedB), 100)
+        self._motorController.setAllSpeed(speedA, speedB)
+
     @property
     def voltage(self):
         return self._motorController.getActiveVoltage()
