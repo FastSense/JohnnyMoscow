@@ -1,93 +1,73 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import threading
-import can
+#import can
+import socket
 import time
-import RPi.GPIO as GPIO
-from rise.cannet.bot import Robot
-from rise.board.robothandle import JohnyHandle
-from rise.rtx.urtxsocket import TcpServer
+#import RPi.GPIO as GPIO
+#from rise.cannet.bot import Robot
+#from rise.board.robothandle import JohnyHandle
 import json
+import logging
+logging.basicConfig(filename='session.log', encoding='utf-8', format='%(asctime)s %(message)s')
 
-#добавляем файл конфигурации для can шины
 configuration = {}
-with open("rise/board/robotconf.json", "r") as file:
+with open("robotConf.json", "r") as file:  # загружаем конфигурацию
     configuration = json.load(file)
 
-#создаем can шину
-bus = can.interface.Bus(channel=configuration["can_interface"], bustype='socketcan_native')
-#bus = seeedstudio.SeeedBus(channel=configuration["candevice"])
+udpPort = configuration["udpPort"]
+udpBuffSize = configuration["udpBuffSize"]
+recvTimeout = configuration["recvTimeout"]
+canChannel = configuration["canInterface"]
+headLimits = configuration["headOneSidedLimits"]
+
+sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+sock.bind(('', udpPort))
+
+
+timer = time.time()    # счетчик задержки приема пакетов
+def delayCountThread():
+    global timer
+    while True:
+        if (time.time() - timer) > recvTimeout:
+            print("timeout: robot stop")
+            timer = time.time()
+        time.sleep(0.01)
+
+
+threading.Thread(daemon=True, target=delayCountThread).start()
+
+while True:
+    data, addr = sock.recvfrom(udpBuffSize)
+    try:
+        package = json.loads(data)
+
+        if ("x" in package) and ("y" in package):
+            x, y = package["x"], package["y"]
+            x = min(max(-1.0, x), 1.0)
+            y = min(max(-1.0, y), 1.0)
+            timer = time.time()
+            print("vector move: ", (x, y))
+        if ("yaw" in package) and ("pitch" in package) and ("roll" in package):
+            yaw, pitch, roll = package["yaw"], package["pitch"], package["roll"]
+            yaw, pitch, roll = int(yaw), int(pitch), int(roll)
+            timer = time.time()
+            print("set head position: ", (yaw, pitch, roll))
+
+    except Exception as e:
+        logging.error("drop package: {data} from {addr}: {err}".format(data=data, addr=addr, err=e.__str__()))
+
+"""
+bus = can.interface.Bus(channel=configuration["can_interface"], bustype='socketcan_native')  # создаем can шину
+# bus = seeedstudio.SeeedBus(channel=configuration["candevice"])
 time.sleep(1)
 
-robot = Robot(bus)
-robot.online = True #шлется онлайн метка
+robot = Robot(bus)  # создаем менеджера can-шины
+robot.online = True  # флаг посылок онлайн меток
 
-server = TcpServer()
-server.open(("", configuration["port"]))
+udpPort = configuration["udpPort"]
 
-jh = None
-
-
-def sendError(num, dlc=0):
-    """ сообщить об ошибке на пульт """
-    server.sendPackage(1, (num, dlc))
-
-
-def recvError(data):
-    """ Обработчик пришедшей ошибки с пульта """
-    pass
-
-
-def recvCalibrate(data):
-    """ обработчик события о пришествии комманды калибровки """
-    try:
-        jh.calibrateHead()
-    except:
-        pass
-
-
-def recvPosition(data):
-    """ обработчик события о пришествии позиции робота """
-    try:
-        jh.setHeadPosition(*data)
-    except KeyError:
-        sendError(0x03)  # отправляем код ошибки
-    except:
-        pass
-
-
-def recvVideoState(data):
-    try:
-        jh.setVideoState(configuration["videodevice"], server.clientAddr, bool(data[0]))
-    except:
-        pass
-
-
-def recvMove(data):
-    try:
-        jh.move(data[0])
-    except:
-        pass
-
-
-def recvRotate(data):
-    try:
-        jh.rotate(data[0])
-    except:
-        pass
-
-
-def recvOnline(data):
-    global onlineCount
-    onlineCount = 0
-
-
-def onReceive(data):
-    """ Хендлер - заглушка """
-    pass
-
-
-global onlineCount
+johnyHandler = JohnyHandle(robot)
 onlineCount = 0
 
 
@@ -96,17 +76,19 @@ def th():
     while True:
         onlineCount += 1
         if onlineCount > 3:
-            robot.online = False    # не шлем метки
+            robot.online = False  # не шлем метки
         else:
-            robot.online = True     # шлем метки
+            robot.online = True  # шлем метки
         time.sleep(1)
 
 
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(4, GPIO.OUT)
+
+
 def lamp():
     global onlineCount
-    while (True):
+    while True:
         if onlineCount > 3:
             GPIO.output(4, True)
             time.sleep(1)
@@ -119,25 +101,15 @@ def lamp():
             time.sleep(0.2)
 
 
-
-
-
-server.subscribe(0, recvOnline)
-server.subscribe(1, recvError)
-server.subscribe(2, recvPosition)
-server.subscribe(3, recvCalibrate)
-server.subscribe(4, recvVideoState)
-server.subscribe(5, recvMove)
-server.subscribe(6, recvRotate)
-server.subscribe("onReceive", onReceive)
-server.start()
 robot.start()
+johnyHandler.start()
 threading.Thread(daemon=True, target=th).start()
 threading.Thread(daemon=True, target=lamp).start()
 
 while True:
-    server.connect(None)  # подключаемся в цикле, т.к. один раз запускаем скрипт на все время работы робота
+    pass
     del jh
     jh = None
     jh = JohnyHandle(robot)
     jh.start()
+"""

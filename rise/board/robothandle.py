@@ -1,8 +1,7 @@
-from rise.devices.head import Head
-from rise.devices.motors import Motors
+from rise.board.head import Head
+from rise.board.motors import Motors
 from rise.cannet.steppercontroller import StepperController
 from rise.cannet.motorcontroller import MotorController
-from rise.utility.video import Video, VIDEO_OUT_LAUNCH
 
 
 class JohnyHandle:
@@ -16,12 +15,10 @@ class JohnyHandle:
         self._robot.addDevice(self._mot)
         self._head = Head(self._step)
         self._motors = Motors(self._mot)
-        #self._video = Video()
 
     def __del__(self):
         try:
             pass
-            #self._video.stop()
         except Exception as e:
             print("On destructor", e)
 

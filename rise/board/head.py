@@ -20,10 +20,12 @@ maxAngleRoll = configurationHead["maxAngleRoll"]
 class Head:
     """ Класс поворотной головы Джонни """
 
-    def __init__(self, stepController):
+    def __init__(self, stepController, oneSidedLimit):
         self._stepController = stepController
-        self._anglesRange = (
-            (-maxAngleYaw, maxAngleYaw), (-maxAnglePitch, maxAnglePitch), (-maxAngleRoll, maxAngleRoll))  # предельные значения углов, на которые может повернуться голова
+        self._anglesRange = ((-oneSidedLimit[0], oneSidedLimit[0]),
+                             (-oneSidedLimit[1], oneSidedLimit[1]),
+                             (-oneSidedLimit[2], oneSidedLimit[2]))  # предельные значения углов, на которые может
+        # повернуться голова
 
     def start(self):
         """ Запускаем работу головы """
