@@ -10,7 +10,7 @@ from rise.board.robothandle import JohnyHandle
 import json
 import logging
 
-logging.basicConfig(filename='session.log', encoding='utf-8',
+logging.basicConfig(filename='session.log', encoding='utf-8', filemode='w',
                     format='[%(levelname)8s] %(asctime)s %(message)s', level=logging.INFO)
 logging.info("start session")
 
