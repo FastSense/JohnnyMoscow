@@ -5,7 +5,7 @@ import socket
 import time
 from joydepend import joystick
 
-serverIp = 'localhost'
+serverIp = 'localhost'  # необходимо указать ip робота
 serverPort = 9009
 sendFreq = 5    # слать 5 пакетов в сек
 _exit = False   # переменная выхода из потоков

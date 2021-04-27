@@ -4,7 +4,7 @@ import json
 import socket
 import time
 
-serverIp = 'localhost'  # ip робота
+serverIp = 'localhost'  # необходимо указать ip робота
 serverPort = 9009   # порт робота
 sendFreq = 15    # слать 15 пакетов в сек
 
