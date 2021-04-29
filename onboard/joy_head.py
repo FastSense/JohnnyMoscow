@@ -52,9 +52,3 @@ try:
 except KeyboardInterrupt:
     J.exit()
     sock.close()
-
-
-# на роботе должно урезаться до приемлимых голове углов
-yawRange = list(range(0, 120, 1)) + list(range(120, 0, -1)) + list(range(0, -120, -1)) + list(range(-120, 0, 1))
-pitchRange = list(range(0, 90, 1)) + list(range(90, 0, -1)) + list(range(0, -90, -1)) + list(range(-90, 0, 1))
-rollRange = list(range(0, 140, 1)) + list(range(140, 0, -1)) + list(range(0, -140, -1)) + list(range(-140, 0, 1))
