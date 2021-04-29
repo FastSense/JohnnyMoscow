@@ -27,9 +27,9 @@ try:
     while True:
         try:
             angle = glasses.angleHead
-            head_package["yaw"] = angle
-            head_package["pitch"] = angle
-            head_package["roll"] = angle
+            head_package["yaw"] = angle[0]
+            head_package["pitch"] = angle[1]
+            head_package["roll"] = angle[2]
             sock.sendto(json.dumps(head_package, ensure_ascii=False).encode("utf8"), (serverIp, serverPort))  # кодируем
             # json и отправляем его
         except BrokenPipeError:
@@ -38,12 +38,9 @@ try:
             print("Ошибка при отправке пакета с данными углов головы робота: " + e.__repr__())
 
         try:
-            if i > 2:
-                joy_package["x"] = J.axis['x']  # могут быть другие оси, можно переназначить, но необходимо выяснить их название
-                joy_package["y"] = J.axis['y']
-                sock.sendto(json.dumps(joy_package, ensure_ascii=False).encode("utf8"), (serverIp, serverPort))  # кодируем json и
-                i = 0
-            i += 1
+            joy_package["x"] = J.axis['x']  # могут быть другие оси, можно переназначить, но необходимо выяснить их название
+            joy_package["y"] = -J.axis['y']
+            sock.sendto(json.dumps(joy_package, ensure_ascii=False).encode("utf8"), (serverIp, serverPort))  # кодируем json и
         except BrokenPipeError:
             print("Ошибка при отправке пакета с данными движения робота")
         except Exception as e:
