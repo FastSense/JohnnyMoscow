@@ -38,7 +38,7 @@ try:
             print("Ошибка при отправке пакета с данными углов головы робота: " + e.__repr__())
 
         try:
-            joy_package["x"] = J.axis['x']  # могут быть другие оси, можно переназначить, но необходимо выяснить их название
+            joy_package["x"] = -J.axis['x']  # могут быть другие оси, можно переназначить, но необходимо выяснить их название
             joy_package["y"] = -J.axis['y']
             sock.sendto(json.dumps(joy_package, ensure_ascii=False).encode("utf8"), (serverIp, serverPort))  # кодируем json и
         except BrokenPipeError:
