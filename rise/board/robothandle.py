@@ -17,8 +17,7 @@ class JohnyHandle:
         self._head = Head(self._step, headLimits)
         self._motors = Motors(self._mot)
 
-        self.min_speed = 10
-        self.max_speed = 20
+        self.max_speed = 25
 
     def start(self):
         self._head.start()
@@ -44,10 +43,7 @@ class JohnyHandle:
         """ управление по вектору. x [-0.2, 0.2]; y [-0.2, 0.2] - мертвые зоны """
         left = (y - x) * self.max_speed
         right = (y + x) * self.max_speed
-        if math.atan2(y, x) > 0:
-            self._motors.setSpeed(-int(right), int(left))
-        else:
-            self._motors.setSpeed(-int(left), int(right))
+        self._motors.setSpeed(-int(right), int(left))
 
     @property
     def voltage(self):
