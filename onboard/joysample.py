@@ -3,7 +3,7 @@
 import json
 import socket
 import time
-from joydepend import joystick
+from src import joystick
 
 serverIp = 'localhost'  # необходимо указать ip робота
 serverPort = 9009

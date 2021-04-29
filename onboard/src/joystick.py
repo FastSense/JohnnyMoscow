@@ -4,7 +4,7 @@ import struct
 import array
 from fcntl import ioctl
 import threading
-from joydepend import eventmaster
+import eventmaster
 
 
 class JoyCrashError(Exception):
