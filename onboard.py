@@ -10,8 +10,13 @@ from rise.board.robothandle import JohnyHandle
 import json
 import logging
 
-logging.basicConfig(filename='session.log', encoding='utf-8', filemode='w',
-                    format='[%(levelname)8s] %(asctime)s %(message)s', level=logging.INFO)
+#logging.basicConfig(filename='session.log', encoding='utf-8', filemode='w',
+#                    format="[%(levelname)8s] %(asctime)s %(message)s", level=logging.INFO)
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+handler = logging.FileHandler('session.log', 'w', 'utf-8')
+handler.setFormatter(logging.Formatter("[%(levelname)8s] %(asctime)s %(message)s"))
+logger.addHandler(handler)
 logging.info("start session")
 
 configuration = {}
@@ -84,7 +89,7 @@ logging.info("start receive packages")
 while True:
     data, addr = sock.recvfrom(udpBuffSize)
     try:
-        package = json.loads(data)
+        package = json.loads(data.decode('utf-8'))
 
         if ("x" in package) and ("y" in package):
             x, y = package["x"], package["y"]
@@ -96,7 +101,6 @@ while True:
         if ("yaw" in package) and ("pitch" in package) and ("roll" in package):
             yaw, pitch, roll = package["yaw"], package["pitch"], package["roll"]
             yaw, pitch, roll = int(yaw), int(pitch), int(roll)
-            #timer = time.time()
             johnyHandler.setHeadPosition(yaw, pitch, roll)
 
     except Exception as e:

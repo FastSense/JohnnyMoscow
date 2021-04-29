@@ -1,6 +1,6 @@
 import serial
 import threading
-import eventmaster
+from . import eventmaster
 
 """Список того, что можно импортировоть из модуля через from"""
 __all__ = [

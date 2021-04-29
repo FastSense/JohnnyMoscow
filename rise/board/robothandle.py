@@ -17,6 +17,8 @@ class JohnyHandle:
         self._head = Head(self._step, headLimits)
         self._motors = Motors(self._mot)
 
+        self.speed = 20
+
     def start(self):
         self._head.start()
         self._motors.start()
@@ -62,12 +64,11 @@ class JohnyHandle:
         left = max(-1.0, min(left, 1.0))
         right = max(-1.0, min(right, 1.0))
 
-        left = int(left * 100)
-        right = int(right * 100)
+        left = int(left * self.speed)
+        right = int(right * self.speed)
 
         self._motors.setSpeed(left, right)
 
     @property
     def voltage(self):
         return self._motors.voltage
-
