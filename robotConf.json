@@ -1,0 +1,8 @@
+{
+  "udpPort": 9009,
+  "udpBuffSize": 1024,
+  "recvTimeout": 0.6,
+  "canInterface": "can0",
+  "headOneSidedLimits": [105, 90, 130]
+
+}

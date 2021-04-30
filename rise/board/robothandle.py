@@ -1,29 +1,23 @@
-from rise.devices.head import Head
-from rise.devices.motors import Motors
+import math
+from rise.board.head import Head
+from rise.board.motors import Motors
 from rise.cannet.steppercontroller import StepperController
 from rise.cannet.motorcontroller import MotorController
-from rise.utility.video import Video, VIDEO_OUT_LAUNCH
 
 
 class JohnyHandle:
     """ Класс, обрабатывающий сообщения и управляющий роботом на самом роботе """
 
-    def __init__(self, robotHandle):
+    def __init__(self, robotHandle, headLimits):
         self._robot = robotHandle
         self._step = StepperController(self._robot, 0x230)
         self._mot = MotorController(self._robot, 0x200)
         self._robot.addDevice(self._step)
         self._robot.addDevice(self._mot)
-        self._head = Head(self._step)
+        self._head = Head(self._step, headLimits)
         self._motors = Motors(self._mot)
-        #self._video = Video()
 
-    def __del__(self):
-        try:
-            pass
-            #self._video.stop()
-        except Exception as e:
-            print("On destructor", e)
+        self.max_speed = 25
 
     def start(self):
         self._head.start()
@@ -32,13 +26,6 @@ class JohnyHandle:
     def setHeadPosition(self, yaw, pitch, roll):
         """ Установка позиции головы робота """
         self._head.setAllPosition(yaw, pitch, roll)
-
-    def setVideoState(self, dev, host, state):
-        """ включение/выключение видео """
-        if state:
-            pass
-        else:
-            pass
 
     def calibrateHead(self):
         """ калибровка головы робота """
@@ -52,7 +39,12 @@ class JohnyHandle:
         """ поворот на месте """
         self._motors.rotate(speed)
 
+    def vector(self, x, y):
+        """ управление по вектору. x [-0.2, 0.2]; y [-0.2, 0.2] - мертвые зоны """
+        left = (y - x) * self.max_speed
+        right = (y + x) * self.max_speed
+        self._motors.setSpeed(-int(right), int(left))
+
     @property
     def voltage(self):
         return self._motors.voltage
-

@@ -1,6 +1,6 @@
 # Johnny
 ПО работы робота телеприсутствия Johnny
-![Johnny](image/Johnny.jpg)
+![Johnny](doc/image/Johnny.jpg)
 
 Включение робота.
 
