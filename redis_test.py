@@ -5,12 +5,14 @@ import threading
 import json
 import redis
 import sys
+import socket
 
 
 class JohnyServer(object):
     """Class for processing connections between elements of Johny's avatar system"""
 
-    def __init__(self, host='localhost', port=6379, password='', status_sending_interval=5):
+    def __init__(self, redis_host='localhost', redis_port=6379, redis_password='',
+                 status_sending_interval=5, johny_ip='192.168.118.125', johny_port=9009):
         """Connects to local Redis server, subscribes to 'command' topic and starts
         sending system status to 'status' topic
 
@@ -20,8 +22,13 @@ class JohnyServer(object):
             password: redis server password
             status_sending_interval: interval in seconds to send system status to topic
         """
-        self.redis_connection = redis.Redis(host=host, port=port, db=0, password=password)
+        self.redis_connection = redis.Redis(host=redis_host, port=redis_port, db=0,
+                                            password=redis_password)
         self.status_sending_interval = status_sending_interval
+
+        self.johny_ip = johny_ip
+        self.johny_port = johny_port
+        self.johny_udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
         self.allowed_commands_and_fields = {
             "ARM": {"arm", "x", "y", "z", "r", "p", "yw", "fingers"},
@@ -42,6 +49,23 @@ class JohnyServer(object):
         self.pubsub.psubscribe(**{'command': self.command_callback})
         self.pubsub.run_in_thread(sleep_time=.01)
 
+    def send_wheels_command(self, data):
+        package["x"] = -round(data['x'], 3)
+        package["y"] = -round(data['y'], 3)
+        self.send_to_udp(package)
+
+    def send_head_command(self, data):
+        head_package["yaw"] = round(data['y'], 3)
+        head_package["pitch"] = round(data['p'], 3)
+        head_package["roll"] = -round(data['r'], 3)
+        self.send_to_udp(head_package)
+
+    def send_to_udp(self, udp_package):
+        self.johny_udp_socket.sendto(
+            json.dumps(udp_package, ensure_ascii=False).encode("utf8"),
+            (self.johny_ip, self.johny_port)
+        )
+
     def command_callback(self, msg):
         """Callback for 'command' topic
 
@@ -57,7 +81,13 @@ class JohnyServer(object):
                     print(self.allowed_commands_and_fields[command["command"]])
                     if command["data"].keys() == self.allowed_commands_and_fields[
                        command["command"]]:
+                        # Echo command's data to 'status' topic
                         self.system_status[command["command"]] = command["data"]
+                        # Sending commands to Johny through UDP socket
+                        if command["command"] == "WHEELS":
+                            self.send_wheels_command(command["data"])
+                        if command["command"] == "HEAD":
+                            self.send_head_command(command["data"])
                     else:
                         print("Command error: wrong fields in data!")
                 else:
