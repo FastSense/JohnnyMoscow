@@ -11,7 +11,7 @@ import socket
 class JohnyServer(object):
     """Class for processing connections between elements of Johny's avatar system"""
 
-    def __init__(self, redis_host='localhost', redis_port=6379, redis_password='',
+    def __init__(self, redis_host='localhost', redis_port=6379, redis_password='DTL@b2021',
                  status_sending_interval=5, johny_ip='192.168.118.125', johny_port=9009):
         """Connects to local Redis server, subscribes to 'command' topic and starts
         sending system status to 'status' topic
@@ -31,7 +31,7 @@ class JohnyServer(object):
         self.johny_udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
         self.allowed_commands_and_fields = {
-            "ARM": {"arm", "x", "y", "z", "r", "p", "yw", "fingers"},
+            "ARM": {"arm", "pos", "rot", "fingers"},
             "HEAD": {"r", "p", "y"},
             "WHEELS": {"x", "y"},
             "OPTION": {"assistanceOn"}
@@ -39,7 +39,12 @@ class JohnyServer(object):
 
         self.pubsub = self.redis_connection.pubsub()
 
-        self.system_status = {}
+        self.system_status = {
+            "ARM": {"arm": 1, "pos":{"x":0,"y":0,"z":0}, "rot":{"r":0,"p":0,"y":0}, "fingers":0},
+            "HEAD": {"r": 0, "p": 0, "y": 0},
+            "WHEELS": {"x": 0, "y": 0},
+            "OPTION": {"assistanceOn": 0}
+        }
         self.status_lock = threading.Lock()
 
         # Start sending system status
@@ -50,11 +55,13 @@ class JohnyServer(object):
         self.pubsub.run_in_thread(sleep_time=.01)
 
     def send_wheels_command(self, data):
+        package = {}
         package["x"] = -round(data['x'], 3)
         package["y"] = -round(data['y'], 3)
         self.send_to_udp(package)
 
     def send_head_command(self, data):
+        head_package = {}
         head_package["yaw"] = round(data['y'], 3)
         head_package["pitch"] = round(data['p'], 3)
         head_package["roll"] = -round(data['r'], 3)
@@ -77,8 +84,6 @@ class JohnyServer(object):
             try:
                 command = json.loads(msg["data"])
                 if command["command"] in self.allowed_commands_and_fields:
-                    print(command["data"].keys())
-                    print(self.allowed_commands_and_fields[command["command"]])
                     if command["data"].keys() == self.allowed_commands_and_fields[
                        command["command"]]:
                         # Echo command's data to 'status' topic
@@ -93,7 +98,7 @@ class JohnyServer(object):
                 else:
                     print("Error: unknown command!")
             except:
-                e = sys.exc_info()[0]
+                e = sys.exc_info()
                 print('Error: ' + str(e))
 
     def publish_system_status(self):
