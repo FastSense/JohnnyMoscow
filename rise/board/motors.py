@@ -14,6 +14,14 @@ class Motors:
         time.sleep(0.1)
         self._motorController.setWorkMode(WorkMode.PID)
         time.sleep(0.1)
+        #print(self._motorController.getParamByNum(0x02))
+        # Set PIDs
+        self._motorController.setParamRequest(0x02, 1.3) # P, default 0.1
+        time.sleep(0.1)
+        self._motorController.setParamRequest(0x03, 0.3) # I, default 0.3
+        time.sleep(0.1)
+        self._motorController.setParamRequest(0x04, 0.0) # D, default 0.0
+        time.sleep(0.1)
 
     def move(self, speed):
         """ Движение вперед/назад """

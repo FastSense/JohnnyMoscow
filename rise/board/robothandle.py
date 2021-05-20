@@ -4,6 +4,11 @@ from rise.board.motors import Motors
 from rise.cannet.steppercontroller import StepperController
 from rise.cannet.motorcontroller import MotorController
 
+# Reduser for angle velocity
+ANGLE_VELOCITY_MULTIPLYER = 0.3
+# Linear part of angle velocity - we want to steer more during linear movement
+LINEAR_VELOCITY_MULTIPLYER = 0.5
+
 
 class JohnyHandle:
     """ Класс, обрабатывающий сообщения и управляющий роботом на самом роботе """
@@ -17,7 +22,7 @@ class JohnyHandle:
         self._head = Head(self._step, headLimits)
         self._motors = Motors(self._mot)
 
-        self.max_speed = 25
+        self.max_speed = 100
 
     def start(self):
         self._head.start()
@@ -40,7 +45,7 @@ class JohnyHandle:
         self._motors.rotate(speed)
 
     def vector(self, x, y):
-        """ управление по вектору. x [-0.2, 0.2]; y [-0.2, 0.2] - мертвые зоны """
+        x = x * ANGLE_VELOCITY_MULTIPLYER + (x * abs(y) * LINEAR_VELOCITY_MULTIPLYER)
         left = (y - x) * self.max_speed
         right = (y + x) * self.max_speed
         self._motors.setSpeed(-int(right), int(left))

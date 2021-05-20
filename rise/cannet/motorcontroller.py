@@ -4,8 +4,8 @@ from rise.cannet.basecontroller import BaseController
 class WorkMode:
     """ Класс, хранящий режимы работы контроллера """
     NONE = 0
-    PID = 1
-    PWM = 2
+    PID = 1 # -100..100
+    PWM = 2 # -255..255
 
 
 class MotorController(BaseController):
@@ -16,7 +16,7 @@ class MotorController(BaseController):
             0xCC: {"name": 'work mode', type: "B"},  #
             0xCD: {"name": 'clear odometres', type: ""},  #
             0xCE: {"name": 'PWM pulse', type: ""},  # TODO: тип - неизвестно)
-            0xCF: {"name": 'set PWM', type: "Bh"},  #
+            0xCF: {"name": 'set PWM', type: "Bh"},  # Params to set setpoints
             0xD0: {"name": 'set speed', type: "Bh"},  #
             0xD1: {"name": 'set all PWM', type: "hh"},
             0xD2: {"name": 'set all speed', type: "hh"},
@@ -24,15 +24,15 @@ class MotorController(BaseController):
         })
 
         self._paramDict.update({
-            0x01: {"name": 'debug info mask', type: "B"},
+            0x01: {"name": 'debug info mask', type: "B"}, # Debug bitmask for motor values
             0x02: {"name": 'proportional coefficient', type: "f"},
             0x03: {"name": 'integral coefficient', type: "f"},
             0x04: {"name": 'derivative coefficient', type: "f"},
-            0x05: {"name": 'limit summ', type: "h"},
-            0x06: {"name": 'time PID', type: "H"},
+            0x05: {"name": 'limit summ', type: "h"}, # I term limit
+            0x06: {"name": 'time PID', type: "H"}, # Hall's sensors ticks
             0x07: {"name": 'time PWM', type: "H"},
-            0x08: {"name": 'pwm DeadZone', type: "B"},
-            0x09: {"name": 'accelbreak step', type: "B"},
+            0x08: {"name": 'pwm DeadZone', type: "B"}, # Bottom PWM level
+            0x09: {"name": 'accelbreak step', type: "B"}, # PWM mode acceleration step
             0x0A: {"name": 'emergency level', type: "H"},
 
             # Параметры только для чтения
@@ -40,16 +40,17 @@ class MotorController(BaseController):
             0x13: {"name": 'Error Code', type: "B"},
             0x14: {"name": 'Work mode', type: "B"},
 
+	    # Current inside values
             # 1 мотор
-            0x15: {"name": 'PRM_P_A', type: "f"},
+            0x15: {"name": 'PRM_P_A', type: "f"}, 
             0x16: {"name": 'PRM_I_A', type: "f"},
             0x17: {"name": 'PRM_D_A', type: "f"},
             0x18: {"name": 'PRM_INT_SUMM_A', type: "i"},
             0x19: {"name": 'PRM_PWM_A', type: "h"},
             0x1A: {"name": 'PRM_PARROT_A', type: "h"},
             0x1B: {"name": 'PRM_ODOM_A', type: "i"},
-            0x1C: {"name": 'PRM_SET_PARROT_A', type: "h"},
-            0x1D: {"name": 'PRM_SET_PWM_A', type: "h"},
+            0x1C: {"name": 'PRM_SET_PARROT_A', type: "h"}, # Current setpoint (PID mode)
+            0x1D: {"name": 'PRM_SET_PWM_A', type: "h"}, # PWM mode
 
             # 2 мотор
             0x1E: {"name": 'PRM_P_B', type: "f"},
