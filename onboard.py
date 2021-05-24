@@ -18,13 +18,13 @@ pubsub.subscribe('command')
 #                    format="[%(levelname)8s] %(asctime)s %(message)s", level=logging.INFO)
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
-handler = logging.FileHandler('session.log', 'w', 'utf-8')
+handler = logging.FileHandler('/home/pi/session.log', 'w', 'utf-8')
 handler.setFormatter(logging.Formatter("[%(levelname)8s] %(asctime)s %(message)s"))
 logger.addHandler(handler)
 logging.info("start session")
 
 configuration = {}
-with open("robotConf.json", "r") as file:  # загружаем конфигурацию
+with open("/home/pi/johnny_dev/JohnnyMoscow/robotConf.json", "r") as file:  # загружаем конфигурацию
     configuration = json.load(file)
 
 recvTimeout = configuration["recvTimeout"]
