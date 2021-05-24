@@ -2,13 +2,17 @@
 # -*- coding: utf-8 -*-
 import threading
 import can
-import socket
 import time
 import RPi.GPIO as GPIO
 from rise.cannet.bot import Robot
 from rise.board.robothandle import JohnyHandle
 import json
 import logging
+import redis
+
+redis_connection = redis.Redis(host='192.168.118.96', port=6379, db=0, password='DTL@b2021')
+pubsub = redis_connection.pubsub()
+pubsub.subscribe('command')
 
 #logging.basicConfig(filename='session.log', encoding='utf-8', filemode='w',
 #                    format="[%(levelname)8s] %(asctime)s %(message)s", level=logging.INFO)
@@ -23,8 +27,6 @@ configuration = {}
 with open("robotConf.json", "r") as file:  # загружаем конфигурацию
     configuration = json.load(file)
 
-udpPort = configuration["udpPort"]
-udpBuffSize = configuration["udpBuffSize"]
 recvTimeout = configuration["recvTimeout"]
 canChannel = configuration["canInterface"]
 headLimits = configuration["headOneSidedLimits"]
@@ -40,10 +42,6 @@ robot.online = True  # флаг посылок онлайн меток
 
 logging.info("create robot handler")
 johnyHandler = JohnyHandle(robot, headLimits)   # обработчик команд
-
-logging.info("create udp server")
-sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-sock.bind(('', udpPort))
 
 timer = time.time()    # счетчик задержки приема пакетов
 
@@ -87,21 +85,45 @@ johnyHandler.calibrateHead()
 
 logging.info("start receive packages")
 while True:
-    data, addr = sock.recvfrom(udpBuffSize)
+    msg = pubsub.get_message()
+
+    if msg is not None:
+        if msg['data'] != 1:
+            data = msg['data']
+        else:
+            continue
+    else:
+        continue
+
     try:
         package = json.loads(data.decode('utf-8'))
-
-        if ("x" in package) and ("y" in package):
-            x, y = package["x"], package["y"]
-            x = min(max(-1.0, x), 1.0)
-            y = min(max(-1.0, y), 1.0)
-            johnyHandler.vector(x, y)
+        if package["command"] == "WHEELS":
+            x, y = package["data"]["x"], package["data"]["y"]
+            x = -min(max(-1.0, x), 1.0)
+            y = -min(max(-1.0, y), 1.0)
+            # johnyHandler.vector(x, y)
             timer = time.time()
 
-        if ("yaw" in package) and ("pitch" in package) and ("roll" in package):
-            yaw, pitch, roll = package["yaw"], package["pitch"], package["roll"]
+        if package["command"] == "HEAD":
+            yaw, pitch, roll = package["data"]["rot"]["y"], package["data"]["rot"]["p"], package["data"]["rot"]["r"]
+            pitch = pitch * 1.8
             yaw, pitch, roll = int(yaw), int(pitch), int(roll)
-            johnyHandler.setHeadPosition(yaw, pitch, roll)
+            if yaw > 180:
+                yaw = -1 * (360 - yaw)
+            if pitch > 180:
+                pitch = -1 * (360 - pitch)
+
+            if pitch > 130:
+                pitch = 130
+            if pitch < -130:
+                pitch = -130
+
+            if yaw > 110:
+                yaw = 110
+            if yaw < - 110:
+                yaw = -110
+
+            johnyHandler.setHeadPosition(-yaw, pitch, roll)
 
     except Exception as e:
         logging.error("drop package: {data} from {addr}: {err}".format(data=data, addr=addr, err=e.__str__()))
